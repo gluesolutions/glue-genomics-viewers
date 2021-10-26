@@ -8,8 +8,6 @@ import pandas as pd
 from glue.core import Subset
 from glue.utils import nonpartial, defer_draw, decorate_all_methods
 from glue.viewers.matplotlib.qt.data_viewer import MatplotlibDataViewer
-import coolbox.api as cb
-from coolbox.utilities.bed import ReadBed
 
 from qtpy import QtWidgets
 from ...data import BedgraphData, BedGraph, GenomeRange
