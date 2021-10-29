@@ -70,7 +70,7 @@ class BedGraph:
 
 
         df = pd.read_csv(self.path, delimiter='\t', names=['chr', 'stop', 'start', 'value'])
-        check_call(f"bgzip --stdout {self.path} > {self.path}.bgz", shell=True)
+        check_call(f"bgzip -c {self.path} > {self.path}.bgz", shell=True)
         check_call(['tabix', '-p', 'bed', self.path + '.bgz'])
 
         downsample_factors = [self.downsample_factor ** (i + 1) for i in range(self.depth)]
@@ -80,7 +80,7 @@ class BedGraph:
             decimated.to_csv(path, sep='\t', index=False, header=False)
             df = decimated
 
-            check_call(f"bgzip --stdout {path} > {path}.bgz", shell=True)
+            check_call(f"bgzip -c {path} > {path}.bgz", shell=True)
             check_call(['tabix', '-p', 'bed', path + ".bgz"])
 
     @staticmethod
@@ -221,7 +221,7 @@ class BedPe:
             df = self.decimate_loops(df, factor)
             df.to_csv(path, sep='\t', index=False, header=False)
 
-            check_call(f"bgzip --stdout {path} > {path}.bgz", shell=True)
+            check_call(f"bgzip -c {path} > {path}.bgz", shell=True)
             logger.info("pairix", path)
             check_call(
                 ['pairix', '-f', '-s', '1', '-d', '4', '-b', '2', '-e', '3', '-u', '5', '-v', '6', path + '.bgz'])
@@ -382,8 +382,8 @@ class BedPeData(GenomicData):
             
             #We could first filter to remove subset_states outside the range entirely
             subset_indices = pd.Series(list(range(len(subset_state.starts)))) #NCLS requires this, though we could do it in the subset object
-            subset_starts = pd.Series(subset_state.starts)
-            subset_ends = pd.Series(subset_state.ends)
+            subset_starts = pd.Series(subset_state.starts).astype('int')
+            subset_ends = pd.Series(subset_state.ends).astype('int')
             
             l_idxs_1, r_idxs_1 = ncls1.all_overlaps_both(subset_starts.values, subset_ends.values, subset_indices.values)
             l_idxs_2, r_idxs_2 = ncls2.all_overlaps_both(subset_starts.values, subset_ends.values, subset_indices.values)
