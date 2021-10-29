@@ -11,6 +11,7 @@ from glue.core import Data
 from .subsets import GenomicRangeSubsetState, GenomicMulitRangeSubsetState
 
 from ncls import NCLS #For fast overlaps
+from qtpy.QtWidgets import QMessageBox
 
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,14 @@ class BedGraph:
         if all(os.path.exists(p + '.bgz.tbi') for p in outpaths):
             logger.debug("Already indexed")
             return
+
+        do_index = showdialog(filename = os.path.basename(self.path))
+        print(do_index)
+        if do_index == QMessageBox.Ok:
+            pass
+        else:
+            raise FileNotFoundError
+
 
         df = pd.read_csv(self.path, delimiter='\t', names=['chr', 'stop', 'start', 'value'])
         check_call(f"bgzip --stdout {self.path} > {self.path}.bgz", shell=True)
@@ -155,6 +164,21 @@ class BedGraph:
             yield chrom, lo, hi, current_max / (hi - lo)
 
 
+def showdialog(filename):
+
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Information)
+ 
+    msg.setText(f"The dataset {filename} needs to be indexed by glue before it can be visualized in the Genome Track Viewer.")
+    #msg.setInformativeText("This is additional information")
+    msg.setWindowTitle("Do you want to index this file?")
+    msg.setDetailedText("This process is quite slow (~10min/Gb) but only needs to be done once (indexed files are written to disk in a hidden .glue_index/ directory). Do you want to continue? Glue will be unresponsive during the indexing.")
+    msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+    #msg.buttonClicked.connect(msgbtn)
+     
+    retval = msg.exec_()
+    return retval
+
 @dataclass
 class BedPe:
     """
@@ -167,12 +191,20 @@ class BedPe:
     depth = 7
 
     def index(self):
+        
         os.makedirs(os.path.join(os.path.dirname(self.path), '.glue_index'), exist_ok=True)
         outpaths = [self._level_path(i) for i in range(self.depth)]
         if all(os.path.exists(p + '.bgz.px2') for p in outpaths):
             logger.debug("Already indexed")
             return
 
+        do_index = showdialog(filename = os.path.basename(self.path))
+        print(do_index)
+        if do_index == QMessageBox.Ok:
+            pass
+        else:
+            raise FileNotFoundError
+        
         df = pd.read_csv(self.path, delimiter='\t',
                          names=['chrom1', 'start1', 'end1', 'chrom2', 'start2', 'end2', 'value'])
         df = df.sort_values(['chrom1', 'chrom2', 'start1', 'start2'])
