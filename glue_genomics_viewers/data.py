@@ -11,7 +11,7 @@ from glue.core import Data
 from .subsets import GenomicRangeSubsetState, GenomicMulitRangeSubsetState
 
 from ncls import NCLS #For fast overlaps
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox #Ideally QT dependence would go elsewhere
 
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class BedGraph:
             logger.debug("Already indexed")
             return
 
-        do_index = showdialog(filename = os.path.basename(self.path))
+        do_index = show_index_dialog(filename = os.path.basename(self.path))
         print(do_index)
         if do_index == QMessageBox.Ok:
             pass
@@ -164,18 +164,15 @@ class BedGraph:
             yield chrom, lo, hi, current_max / (hi - lo)
 
 
-def showdialog(filename):
+def show_index_dialog(filename):
 
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
  
     msg.setText(f"The dataset {filename} needs to be indexed by glue before it can be visualized in the Genome Track Viewer.")
-    #msg.setInformativeText("This is additional information")
+    msg.setInformativeText("This process is quite slow (~10min/Gb) but only needs to be done once (indexed files are written to disk in a hidden .glue_index/ directory). Do you want to continue? Glue will be unresponsive during the indexing.")
     msg.setWindowTitle("Do you want to index this file?")
-    msg.setDetailedText("This process is quite slow (~10min/Gb) but only needs to be done once (indexed files are written to disk in a hidden .glue_index/ directory). Do you want to continue? Glue will be unresponsive during the indexing.")
     msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    #msg.buttonClicked.connect(msgbtn)
-     
     retval = msg.exec_()
     return retval
 
@@ -198,7 +195,7 @@ class BedPe:
             logger.debug("Already indexed")
             return
 
-        do_index = showdialog(filename = os.path.basename(self.path))
+        do_index = show_index_dialog(filename = os.path.basename(self.path))
         print(do_index)
         if do_index == QMessageBox.Ok:
             pass
