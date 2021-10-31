@@ -85,6 +85,18 @@ class BedGraph:
         return pd.DataFrame(self._tabix_query(path, gr), columns=['chrom', 'start', 'stop', 'value']).apply(
             pd.to_numeric, errors='ignore')
 
+    def get_chrom_bounds(self):
+        df = self.downsampled_dataframe(self.depth - 1)
+        return [
+            (c, lo, hi)
+            for c, (lo, hi) in
+            df.groupby('chrom').apply(lambda grp: (grp.start.min(), grp.stop.max())).items()
+        ]
+
+    def downsampled_dataframe(self, level):
+        path = self._level_path(level) + '.bgz'
+        return pd.read_csv(path, compression='gzip', delimiter='\t', names=['chrom', 'stop', 'start', 'value'])
+
     def _level_path(self, level):
         a, b = os.path.split(self.path)
 
@@ -221,6 +233,21 @@ class BedPe:
 
         return df
 
+    def get_chrom_bounds(self):
+        df = self.downsampled_dataframe(self.depth - 1)
+        return [
+            (c, lo, hi)
+            for c, (lo, hi) in
+            df.groupby('chrom1').apply(lambda grp: (grp.start1.min(), grp.end2.max())).items()
+        ]
+
+    def downsampled_dataframe(self, level):
+        path = self._level_path(level) + '.bgz'
+        return pd.read_csv(
+            path, compression='gzip', delimiter='\t',
+            names=['chrom1', 'start1', 'end1', 'chrom2', 'start2', 'end2', 'value']
+        )
+
     def _level_path(self, level):
 
         a, b = os.path.split(self.path)
@@ -265,6 +292,10 @@ class GenomicData(Data):
 
     def profile(self, chr, start, end, subset_state=None, **kwargs):
         raise NotImplementedError
+
+    def get_chrom_bounds(self):
+        """Return a list of (chr, start, end) describing the range of data along each chromosome"""
+        return self.engine.get_chrom_bounds()
 
 
 class BedgraphData(GenomicData):

@@ -69,11 +69,27 @@ class GenomeTrackViewer(MatplotlibDataViewer, PanTrackerMixin):
             self.state.start = start
             self.state.end = end
 
+    def _zoom_to_data_bounds(self, data):
+        bounds = data.get_chrom_bounds()
+        if not bounds:  # empty dataset
+            return
+
+        with delay_callback(self.state, 'chr', 'start', 'end'):
+            chr, start, end = bounds[0]
+            self.state.chr = chr.lstrip('chr')
+            self.state.start = start
+            self.state.end = start + (end - start) / 100
+
     def get_data_layer_artist(self, layer=None, layer_state=None):
         cls = GenomeProfileLayerArtist if isinstance(layer, BedgraphData) else GenomeLoopLayerArtist
         result = self.get_layer_artist(cls, layer=layer, layer_state=layer_state)
         result.state.add_callback('zorder', self.reflow_tracks)
         result.state.add_callback('visible', self.reflow_tracks)
+
+        # Update view bounds on first layer
+        if not len(self._layer_artist_container):
+            self._zoom_to_data_bounds(layer.data)
+
         return result
 
     def get_subset_layer_artist(self, layer=None, layer_state=None):
