@@ -105,8 +105,14 @@ class GenomeTrackViewer(MatplotlibDataViewer, PanTrackerMixin):
     def _setup_annotation_track(self):
         self.annotations_ax = GenomeTrackLayerArtist._setup_track_axes(
             self.axes, 'annotations', self.state)
+        annotation_path = os.environ.get('GLUEGENES_GENE_FILE', 'gencodeVM23_bed12.bed.bgz')
+        if os.path.exists(annotation_path) and annotation_path is not None:
+            pass
+        else:
+            annotation_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','data','gencodeVM23_bed12.bed.bgz')
+        print(f'ANNOTATION PATH: {annotation_path}')
         self.annotation = cb.BED(
-            os.environ.get('GLUEGENES_GENE_FILE', 'gencodeVM23_bed12.bed.bgz'),
+            annotation_path,
             num_rows=None,
             gene_style='simple',
             bed_type='bed12',
