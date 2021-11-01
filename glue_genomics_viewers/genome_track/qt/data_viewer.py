@@ -81,7 +81,7 @@ class GenomeTrackViewer(MatplotlibDataViewer, PanTrackerMixin):
             chr, start, end = bounds[0]
             self.state.chr = chr.lstrip('chr')
             self.state.start = start
-            self.state.end = start + (end - start) / 100
+            self.state.end = start + (end - start) / 1
 
     def get_data_layer_artist(self, layer=None, layer_state=None):
         cls = GenomeProfileLayerArtist if isinstance(layer, BedgraphData) else GenomeLoopLayerArtist
@@ -129,7 +129,7 @@ class GenomeTrackViewer(MatplotlibDataViewer, PanTrackerMixin):
         print(f'ANNOTATION PATH: {annotation_path}')
         self.annotation = cb.BED(
             annotation_path,
-            num_rows=None,
+            num_rows=16,
             gene_style='simple',
             bed_type='bed12',
             fontsize=8,
@@ -151,8 +151,11 @@ class GenomeTrackViewer(MatplotlibDataViewer, PanTrackerMixin):
         start = max(int(self.state.start), 1)
         end = max(int(self.state.end), 1)
         start, end = min(start, end), max(start, end)
-        gr = GenomeRange('chr' + self.state.chr, start, end)
-        intervals = BedGraph._tabix_query(self.annotation.properties['file'], gr)
+        if end - start < 5e6: #Annotations over very large regions are slow and illegible
+            gr = GenomeRange('chr' + self.state.chr, start, end)
+            intervals = BedGraph._tabix_query(self.annotation.properties['file'], gr)
+        else:
+            intervals = None
 
         if intervals:
             parsed = list(ReadBed('\t'.join(l) for l in intervals))
